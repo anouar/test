@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+    # https://hub.docker.com/r/yappabe/mailcatcher
+    mailcatcher:
+      image: yappabe/mailcatcher
+      container_name: test_mailcatcher
+      ports:
+        - 1025:1025
+        - 1080:1080
+
+    # https://hub.docker.com/_/mariadb
+    mariadb:
+      image: mariadb
+      restart: unless-stopped
+      container_name: test_mariadb
+      volumes:
+        - ./mysql:/var/lib/mysql
+      ports:
+        - "3306:3306"
+      environment:
+        - MYSQL_ROOT_PASSWORD=root
+        - MYSQL_USER=root
+        - MYSQL_PASSWORD=root
+        - MYSQL_DATABASE=test
+
+    # php - apache - centos
+    test-app:
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+        container_name: test_app
+        depends_on:
+            - mariadb
+            - mailcatcher
+        ports:
+            - "8000:80"
+        volumes:
+            - ./web:/var/www/html/
+
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - 8080:8080
